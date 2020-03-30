@@ -39,15 +39,15 @@ bool navigatorPopWithParent(BuildContext context) {
 class SubApp extends MaterialApp {
   final Uri originUri;
   final String appPath;
-
   SubApp({
-    this.originUri,
     this.appPath,
+    this.originUri,
     ThemeData theme,
     Widget home,
 
     ///[destPath] is the path after appPath, it is the destination path need to show.
-    Widget Function(Uri originUri, String destPath, RouteSettings settings)
+    Widget Function(Uri originUri, String destPath, RouteSettings settings,
+            BuildContext context)
         onGenerateRouteWidget,
   }) : super(
           theme: theme,
@@ -56,7 +56,8 @@ class SubApp extends MaterialApp {
             return MaterialPageRoute(
                 builder: (context) =>
                     onGenerateRouteWidget != null && destPath != null
-                        ? onGenerateRouteWidget(originUri, destPath, settings)
+                        ? onGenerateRouteWidget(
+                            originUri, destPath, settings, context)
                         : Container(
                             color: Colors.white,
                           ));
@@ -67,21 +68,22 @@ class SubApp extends MaterialApp {
 
 class SubRouteWidgetBuilder {
   final Uri originUri;
-  final String path;
+  final String rootPath;
   final RouteSettings settings;
-  final Widget Function(SubRouteWidgetBuilder builder, String destPath)
-      _onGenerateRouteWidget;
+  final Widget Function(Uri originUri, String rootPath, String destPath,
+      RouteSettings settings, BuildContext context) _onGenerateRouteWidget;
 
   SubRouteWidgetBuilder(
     this._onGenerateRouteWidget, {
     this.originUri,
-    this.path,
+    this.rootPath,
     this.settings,
   });
 
   Widget build(BuildContext context) {
-    final destPath = getPathAfter(path, settings?.name ?? originUri);
+    final destPath = getPathAfter(rootPath, settings?.name ?? originUri);
     debugPrint('SubRouteWidgetBuilder.build: originUri=$originUri');
-    return _onGenerateRouteWidget(this, destPath);
+    return _onGenerateRouteWidget(
+        originUri, rootPath, destPath, settings, context);
   }
 }

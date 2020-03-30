@@ -22,46 +22,54 @@ class MyApp extends StatelessWidget {
                 theme: ThemeData(
                   primarySwatch: Colors.amber,
                 ),
-                originUri: Uri.tryParse(settings.name),
+                originUri: Uri.tryParse(url),
                 appPath: path1,
-                onGenerateRouteWidget: (originUri, destPath, settings) {
+                onGenerateRouteWidget:
+                    (originUri, destPath, settings, context) {
+                  final page11 = SubRouteWidgetBuilder((Uri originUri,
+                          String rootPath,
+                          String childDestPath,
+                          RouteSettings settings,
+                          BuildContext context) {
+                    if (childDestPath == 'page111')
+                      return SamplePage(
+                        title: childDestPath,
+                      );
+                    else
+                      return SamplePage(
+                        title: destPath,
+                        nextRouteName: 'page1/page11/page111',
+                      );
+                  },
+                      originUri: originUri,
+                      rootPath: destPath,
+                      settings: settings);
+                  final page12 = SubRouteWidgetBuilder((Uri originUri,
+                          String rootPath,
+                          String childDestPath,
+                          RouteSettings settings,
+                          BuildContext context) {
+                    if (childDestPath == 'page121')
+                      return SamplePage(
+                        title: childDestPath,
+                      );
+                    else
+                      return SamplePage(
+                        title: destPath,
+                        nextRouteName: 'page1/page12/page121',
+                      );
+                  },
+                      originUri: originUri,
+                      rootPath: destPath,
+                      settings: settings);
+
                   switch (destPath) {
                     case 'page11':
-                      return SubRouteWidgetBuilder((builder, childDestPath) {
-                        if (childDestPath == 'page111')
-                          return SamplePage(
-                            title: childDestPath,
-                          );
-                        else
-                          return SamplePage(
-                            title: destPath,
-                            nextRouteName: 'page1/page11/page111',
-                          );
-                      },
-                              originUri: originUri,
-                              path: destPath,
-                              settings: settings)
-                          .build(context);
+                      return page11.build(context);
                     case 'page12':
-                      return SubRouteWidgetBuilder((builder, childDestPath) {
-                        if (childDestPath == 'page121')
-                          return SamplePage(
-                            title: childDestPath,
-                          );
-                        else
-                          return SamplePage(
-                            title: destPath,
-                            nextRouteName: 'page1/page12/page121',
-                          );
-                      },
-                              originUri: originUri,
-                              path: destPath,
-                              settings: settings)
-                          .build(context);
+                      return page12.build(context);
                     default:
-                      return SamplePage(
-                        title: path1,
-                      );
+                      return Container(color: Colors.white);
                   }
                 },
                 home: SamplePage(
