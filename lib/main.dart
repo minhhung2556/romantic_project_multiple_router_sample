@@ -1,16 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:multiple_router_sample/sub_app.dart';
 
 void main() => runApp(MyApp());
-
-String getPathAt(String url, [int index = 0]) {
-  debugPrint('url: $url');
-  final uri = Uri.tryParse(url);
-  debugPrint('uri: $uri');
-  final path =
-      (uri?.pathSegments?.length ?? 0) > index ? uri.pathSegments[index] : '';
-  debugPrint('path at $index: $path');
-  return path;
-}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -23,28 +14,20 @@ class MyApp extends StatelessWidget {
       ),
       onGenerateRoute: (settings) {
         final url = settings.name;
-        final path1 = getPathAt(url, 0);
+        final path1 = getPathAfter(null, url);
         switch (path1) {
           case 'page1':
             return MaterialPageRoute(
-              builder: (parentContext) => MaterialApp(
+              builder: (parentContext) => SubApp(
                 theme: ThemeData(
                   primarySwatch: Colors.amber,
                 ),
-                onGenerateRoute: (settings) {
-                  final url = settings.name;
-                  final path11 = getPathAt(url, 1);
-                  switch (path11) {
-                    case 'page11':
-                      return MaterialPageRoute(
-                          builder: (context) => SamplePage(
-                                title: path11,
-                                parentContext: parentContext,
-                              ));
-                    default:
-                      return MaterialPageRoute(
-                          builder: (context) => Container(color: Colors.red));
-                  }
+                appPath: path1,
+                onGenerateRouteWidget: (parentContext, settings, destPath) {
+                  return SamplePage(
+                    title: destPath,
+                    parentContext: parentContext,
+                  );
                 },
                 home: SamplePage(
                   title: path1,
@@ -61,13 +44,13 @@ class MyApp extends StatelessWidget {
       },
       home: SamplePage(
         title: 'Home',
-        nextRouteName: 'page1',
+        nextRouteName: 'page1/page11',
       ),
     );
   }
 }
 
-class SamplePage extends StatefulWidget {
+class SamplePage extends StatelessWidget {
   SamplePage({Key key, this.title, this.nextRouteName, this.parentContext})
       : super(key: key);
 
@@ -76,25 +59,20 @@ class SamplePage extends StatefulWidget {
   final String nextRouteName;
 
   @override
-  _SamplePageState createState() => _SamplePageState();
-}
-
-class _SamplePageState extends State<SamplePage> {
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
       ),
       backgroundColor: Colors.white,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          if (widget.nextRouteName != null)
+          if (nextRouteName != null)
             RaisedButton(
               color: Colors.pinkAccent,
               onPressed: () {
-                Navigator.of(context).pushNamed(widget.nextRouteName);
+                Navigator.of(context).pushNamed(nextRouteName);
               },
               child: Text(
                 'Next',
@@ -104,11 +82,7 @@ class _SamplePageState extends State<SamplePage> {
           RaisedButton(
             color: Colors.black26,
             onPressed: () {
-              final navi = Navigator.of(context);
-              if (navi.canPop())
-                navi.pop();
-              else if (widget.parentContext != null)
-                Navigator.of(widget.parentContext).pop();
+              navigatorPopWithParent(context, parentContext);
             },
             child: Text(
               'Back',
