@@ -18,21 +18,55 @@ class MyApp extends StatelessWidget {
         switch (path1) {
           case 'page1':
             return MaterialPageRoute(
-              builder: (parentContext) => SubApp(
+              builder: (context) => SubApp(
                 theme: ThemeData(
                   primarySwatch: Colors.amber,
                 ),
+                originUri: Uri.tryParse(settings.name),
                 appPath: path1,
-                onGenerateRouteWidget: (parentContext, settings, destPath) {
-                  return SamplePage(
-                    title: destPath,
-                    parentContext: parentContext,
-                  );
+                onGenerateRouteWidget: (originUri, destPath, settings) {
+                  switch (destPath) {
+                    case 'page11':
+                      return SubRouteWidgetBuilder((builder, childDestPath) {
+                        if (childDestPath == 'page111')
+                          return SamplePage(
+                            title: childDestPath,
+                          );
+                        else
+                          return SamplePage(
+                            title: destPath,
+                            nextRouteName: 'page1/page11/page111',
+                          );
+                      },
+                              originUri: originUri,
+                              path: destPath,
+                              settings: settings)
+                          .build(context);
+                    case 'page12':
+                      return SubRouteWidgetBuilder((builder, childDestPath) {
+                        if (childDestPath == 'page121')
+                          return SamplePage(
+                            title: childDestPath,
+                          );
+                        else
+                          return SamplePage(
+                            title: destPath,
+                            nextRouteName: 'page1/page12/page121',
+                          );
+                      },
+                              originUri: originUri,
+                              path: destPath,
+                              settings: settings)
+                          .build(context);
+                    default:
+                      return SamplePage(
+                        title: path1,
+                      );
+                  }
                 },
                 home: SamplePage(
                   title: path1,
-                  nextRouteName: 'page1/page11',
-                  parentContext: parentContext,
+                  nextRouteName: settings.name,
                 ),
               ),
               settings: settings,
@@ -44,17 +78,14 @@ class MyApp extends StatelessWidget {
       },
       home: SamplePage(
         title: 'Home',
-        nextRouteName: 'page1/page11',
       ),
     );
   }
 }
 
 class SamplePage extends StatelessWidget {
-  SamplePage({Key key, this.title, this.nextRouteName, this.parentContext})
-      : super(key: key);
+  SamplePage({Key key, this.title, this.nextRouteName}) : super(key: key);
 
-  final BuildContext parentContext;
   final String title;
   final String nextRouteName;
 
@@ -79,10 +110,32 @@ class SamplePage extends StatelessWidget {
                 style: TextStyle(fontSize: 14, color: Colors.white),
               ),
             ),
+          if (title == 'Home') ...[
+            RaisedButton(
+              color: Colors.pinkAccent,
+              onPressed: () {
+                Navigator.of(context).pushNamed('page1/page11');
+              },
+              child: Text(
+                'Next 1',
+                style: TextStyle(fontSize: 14, color: Colors.white),
+              ),
+            ),
+            RaisedButton(
+              color: Colors.pinkAccent,
+              onPressed: () {
+                Navigator.of(context).pushNamed('page1/page12');
+              },
+              child: Text(
+                'Next 2',
+                style: TextStyle(fontSize: 14, color: Colors.white),
+              ),
+            ),
+          ],
           RaisedButton(
             color: Colors.black26,
             onPressed: () {
-              navigatorPopWithParent(context, parentContext);
+              navigatorPopWithParent(context);
             },
             child: Text(
               'Back',

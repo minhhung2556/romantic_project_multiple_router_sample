@@ -22,43 +22,66 @@ String getPathAfter(String path, String url) {
   return null;
 }
 
-bool navigatorPopWithParent(BuildContext context, BuildContext parentContext) {
+bool navigatorPopWithParent(BuildContext context) {
   assert(context != null);
-  var nav = Navigator.of(context);
-  if (nav.canPop()) return nav.pop();
-  if (parentContext != null) {
-    nav = Navigator.of(parentContext);
+  try {
+    final parentState = context.findAncestorStateOfType<State<MaterialApp>>();
+    var nav = Navigator.of(context);
     if (nav.canPop()) return nav.pop();
-  }
+    if (parentState?.context != null) {
+      nav = Navigator.of(parentState?.context);
+      if (nav.canPop()) return nav.pop();
+    }
+  } catch (e) {}
   return false;
 }
 
 class SubApp extends MaterialApp {
-  final BuildContext parentContext;
+  final Uri originUri;
   final String appPath;
 
   SubApp({
-    this.parentContext,
+    this.originUri,
     this.appPath,
     ThemeData theme,
     Widget home,
 
     ///[destPath] is the path after appPath, it is the destination path need to show.
-    Widget Function(
-            BuildContext parentContext, RouteSettings settings, String destPath)
+    Widget Function(Uri originUri, String destPath, RouteSettings settings)
         onGenerateRouteWidget,
   }) : super(
           theme: theme,
           onGenerateRoute: (settings) {
             final destPath = getPathAfter(appPath, settings?.name);
             return MaterialPageRoute(
-                builder: (context) => onGenerateRouteWidget != null &&
-                        destPath != null
-                    ? onGenerateRouteWidget(parentContext, settings, destPath)
-                    : Container(
-                        color: Colors.white,
-                      ));
+                builder: (context) =>
+                    onGenerateRouteWidget != null && destPath != null
+                        ? onGenerateRouteWidget(originUri, destPath, settings)
+                        : Container(
+                            color: Colors.white,
+                          ));
           },
           home: home,
         );
+}
+
+class SubRouteWidgetBuilder {
+  final Uri originUri;
+  final String path;
+  final RouteSettings settings;
+  final Widget Function(SubRouteWidgetBuilder builder, String destPath)
+      _onGenerateRouteWidget;
+
+  SubRouteWidgetBuilder(
+    this._onGenerateRouteWidget, {
+    this.originUri,
+    this.path,
+    this.settings,
+  });
+
+  Widget build(BuildContext context) {
+    final destPath = getPathAfter(path, settings?.name ?? originUri);
+    debugPrint('SubRouteWidgetBuilder.build: originUri=$originUri');
+    return _onGenerateRouteWidget(this, destPath);
+  }
 }
