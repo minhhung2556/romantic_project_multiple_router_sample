@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:multiple_router_sample/sub_app.dart';
 
+import 'sample_page.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -16,142 +18,90 @@ class MyApp extends StatelessWidget {
         final url = settings.name;
         final path1 = getPathAfter(null, url);
         switch (path1) {
-          case 'page1':
+          case 'tien-ich':
             return MaterialPageRoute(
               builder: (context) => SubApp(
                 theme: ThemeData(
                   primarySwatch: Colors.amber,
                 ),
                 originUri: Uri.tryParse(url),
-                appPath: path1,
+                rootPath: path1,
                 onGenerateRouteWidget:
                     (originUri, destPath, settings, context) {
-                  final page11 = SubRouteWidgetBuilder((Uri originUri,
-                          String rootPath,
-                          String childDestPath,
-                          RouteSettings settings,
-                          BuildContext context) {
-                    if (childDestPath == 'page111')
-                      return SamplePage(
-                        title: childDestPath,
-                      );
-                    else
-                      return SamplePage(
-                        title: destPath,
-                        nextRouteName: 'page1/page11/page111',
-                      );
-                  },
-                      originUri: originUri,
-                      rootPath: destPath,
-                      settings: settings);
-                  final page12 = SubRouteWidgetBuilder((Uri originUri,
-                          String rootPath,
-                          String childDestPath,
-                          RouteSettings settings,
-                          BuildContext context) {
-                    if (childDestPath == 'page121')
-                      return SamplePage(
-                        title: childDestPath,
-                      );
-                    else
-                      return SamplePage(
-                        title: destPath,
-                        nextRouteName: 'page1/page12/page121',
-                      );
-                  },
-                      originUri: originUri,
-                      rootPath: destPath,
-                      settings: settings);
-
-                  switch (destPath) {
-                    case 'page11':
-                      return page11.build(context);
-                    case 'page12':
-                      return page12.build(context);
-                    default:
-                      return Container(color: Colors.white);
-                  }
+                  return SubRouteWidget(
+                          builder: SubRouteConstants
+                              .subRouteWidgetBuilders[destPath],
+                          originUri: originUri,
+                          rootPath: destPath,
+                          settings: settings)
+                      .build(context);
                 },
-                home: SamplePage(
-                  title: path1,
-                  nextRouteName: settings.name,
+                home: _createPage1(),
+                page404: SamplePage(
+                  title: '404',
                 ),
               ),
               settings: settings,
             );
           default:
             return MaterialPageRoute(
-                builder: (context) => Container(color: Colors.red));
+                builder: (context) => SamplePage(
+                      title: path1,
+                    ));
         }
       },
-      home: SamplePage(
-        title: 'Home',
-      ),
+      home: _pageHome(),
     );
   }
 }
 
-class SamplePage extends StatelessWidget {
-  SamplePage({Key key, this.title, this.nextRouteName}) : super(key: key);
-
-  final String title;
-  final String nextRouteName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      backgroundColor: Colors.white,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          if (nextRouteName != null)
-            RaisedButton(
-              color: Colors.pinkAccent,
-              onPressed: () {
-                Navigator.of(context).pushNamed(nextRouteName);
-              },
-              child: Text(
-                'Next',
-                style: TextStyle(fontSize: 14, color: Colors.white),
-              ),
-            ),
-          if (title == 'Home') ...[
-            RaisedButton(
-              color: Colors.pinkAccent,
-              onPressed: () {
-                Navigator.of(context).pushNamed('page1/page11');
-              },
-              child: Text(
-                'Next 1',
-                style: TextStyle(fontSize: 14, color: Colors.white),
-              ),
-            ),
-            RaisedButton(
-              color: Colors.pinkAccent,
-              onPressed: () {
-                Navigator.of(context).pushNamed('page1/page12');
-              },
-              child: Text(
-                'Next 2',
-                style: TextStyle(fontSize: 14, color: Colors.white),
-              ),
-            ),
-          ],
-          RaisedButton(
-            color: Colors.black26,
-            onPressed: () {
-              navigatorPopWithParent(context);
-            },
-            child: Text(
-              'Back',
-              style: TextStyle(fontSize: 14, color: Colors.white),
-            ),
-          )
-        ],
-      ),
+Widget _pageHome() => SamplePage(
+      title: 'Home',
+      nextRouteNames: ['tien-ich', 'page2', 'page3'],
     );
-  }
+
+Widget _createPage1() => SamplePage(
+      title: 'tien-ich',
+      nextRouteNames: ['tien-ich/ve-may-bay', 'tien-ich/hoa-don'],
+    );
+
+Widget _createPage11() => SamplePage(
+      title: 'tien-ich/ve-may-bay',
+      nextRouteNames: [
+        'tien-ich/ve-may-bay/chon-san-bay',
+        'tien-ich/ve-may-bay/page112',
+      ],
+    );
+Widget _createPage111() => SamplePage(
+      title: 'tien-ich/ve-may-bay/chon-san-bay',
+    );
+Widget _createPage12() => SamplePage(
+      title: 'tien-ich/hoa-don',
+      nextRouteNames: ['tien-ich/hoa-don/dien'],
+    );
+Widget _createPage121() => SamplePage(
+      title: 'tien-ich/hoa-don/dien',
+    );
+
+class SubRouteConstants {
+  static final subRouteWidgetBuilders = <String, SubRouteWidgetBuilder>{
+    've-may-bay': (Uri originUri, String rootPath, String destPath,
+        RouteSettings settings, BuildContext context) {
+      if (destPath == null)
+        return _createPage11();
+      else if (destPath == 'chon-san-bay')
+        return _createPage111();
+      else
+        return null;
+    },
+    'hoa-don': (Uri originUri, String rootPath, String destPath,
+        RouteSettings settings, BuildContext context) {
+      if (destPath == null)
+        return _createPage12();
+      else if (destPath == 'dien')
+        return _createPage121();
+      else
+        return null;
+    },
+  };
 }
