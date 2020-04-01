@@ -50,36 +50,49 @@ bool navigatorPopWithParent(BuildContext context) {
 }
 
 ///[destPath] is the path after [rootPath], it is the destination path need to show.
-typedef SubAppWidgetBuilder = Widget Function(Uri originUri, String destPath,
+typedef SubAppWidgetBuilder = Widget Function(String originUri, String destPath,
     RouteSettings settings, BuildContext context);
 
 class SubApp extends MaterialApp {
-  final Uri originUri;
-  final String rootPath;
+  final Map<String, SubRouteWidgetBuilder> subRouteWidgetBuilders;
+
   SubApp({
-    this.rootPath,
-    this.originUri,
     ThemeData theme,
     Widget home,
-    SubAppWidgetBuilder onGenerateRouteWidget,
     Widget page404,
+    Key key,
+    String rootPath,
+    this.subRouteWidgetBuilders,
   }) : super(
+          key: key,
           theme: theme,
           onGenerateRoute: (settings) {
+            String originUri;
+            if (settings.arguments is Map<String, dynamic>) {
+              final map = settings.arguments as Map<String, dynamic>;
+              originUri = map['originUri']?.toString();
+            }
+
             final destPath = getPathAfter(rootPath, settings?.name);
             if (destPath == null || destPath.isEmpty) return null;
+
             return MaterialPageRoute(
-              builder: (context) => onGenerateRouteWidget != null
-                  ? (onGenerateRouteWidget(
-                          originUri, destPath, settings, context) ??
-                      page404 ??
-                      Container(
-                        color: Colors.white,
-                      ))
-                  : page404 ??
-                      Container(
-                        color: Colors.white,
-                      ),
+              builder: (context) {
+                Widget widget;
+                if (subRouteWidgetBuilders != null) {
+                  final childDestPath =
+                      getPathAfter(destPath, originUri ?? settings?.name);
+                  debugPrint(
+                      'SubRouteWidgetBuilder.build: rootPath=$rootPath, destPath=$destPath, childDestPath=$childDestPath');
+
+                  if (subRouteWidgetBuilders[destPath] != null) {
+                    widget = subRouteWidgetBuilders[destPath](
+                        originUri, destPath, childDestPath, settings, context);
+                  }
+                }
+                widget = widget ?? page404 ?? Container(color: Colors.white);
+                return widget;
+              },
             );
           },
           home: home,
@@ -87,35 +100,37 @@ class SubApp extends MaterialApp {
 }
 
 ///[destPath] is the path after [rootPath], it is the destination path need to show.
-typedef SubRouteWidgetBuilder = Widget Function(Uri originUri, String rootPath,
-    String destPath, RouteSettings settings, BuildContext context);
+typedef SubRouteWidgetBuilder = Widget Function(
+    String originUri,
+    String rootPath,
+    String destPath,
+    RouteSettings settings,
+    BuildContext context);
 
 class SubRouteWidget {
-  final Uri originUri;
   final String rootPath;
   final RouteSettings settings;
   final SubRouteWidgetBuilder builder;
 
   SubRouteWidget({
     this.builder,
-    this.originUri,
     this.rootPath,
     this.settings,
   });
 
   Widget build(BuildContext context) {
-    debugPrint('SubRouteWidgetBuilder.build: originUri=$originUri');
+    String originUri;
+    dynamic data;
+    if (settings.arguments is Map<String, dynamic>) {
+      final map = settings.arguments as Map<String, dynamic>;
+      originUri = map['originUri']?.toString();
+      data = map['data'];
+    }
+
+    debugPrint('SubRouteWidgetBuilder.build: data=$data');
+    final destPath = getPathAfter(rootPath, originUri ?? settings?.name);
     debugPrint(
-        'SubRouteWidgetBuilder.build: settings.arguments=${settings.arguments}');
-    final destPath = getPathAfter(rootPath, settings?.name ?? originUri);
+        'SubRouteWidgetBuilder.build: rootPath=$rootPath, destPath=$destPath');
     return builder(originUri, rootPath, destPath, settings, context);
   }
-}
-
-class SubAppRouteSettingsArguments {
-  final Uri originUri;
-  final String rootPath;
-  final dynamic arguments;
-
-  SubAppRouteSettingsArguments({this.originUri, this.rootPath, this.arguments});
 }

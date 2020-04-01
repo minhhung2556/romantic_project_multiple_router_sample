@@ -22,7 +22,10 @@ class SamplePage extends StatelessWidget {
             ...nextRouteNames.map((nn) => RaisedButton(
                   color: Colors.pinkAccent,
                   onPressed: () {
-                    Navigator.of(context).pushNamed(nn, arguments: nn);
+                    Navigator.of(context).pushNamed(nn, arguments: {
+                      'originUri': nn,
+                      'data': {'abc': '123'}
+                    });
                   },
                   child: Text(
                     'Next $nn',

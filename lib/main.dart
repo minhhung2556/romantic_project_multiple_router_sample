@@ -15,93 +15,121 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       onGenerateRoute: (settings) {
-        final url = settings.name;
-        final path1 = getPathAfter(null, url);
-        switch (path1) {
-          case 'tien-ich':
+        final routeName = settings.name;
+        final rootPath = getPathAfter(null, routeName);
+        switch (rootPath) {
+          case AppRouters.PC3:
             return MaterialPageRoute(
               builder: (context) => SubApp(
                 theme: ThemeData(
                   primarySwatch: Colors.amber,
                 ),
-                originUri: Uri.tryParse(url),
-                rootPath: path1,
-                onGenerateRouteWidget:
-                    (originUri, destPath, settings, context) {
-                  return SubRouteWidget(
-                          builder: SubRouteConstants
-                              .subRouteWidgetBuilders[destPath],
-                          originUri: originUri,
-                          rootPath: destPath,
-                          settings: settings)
-                      .build(context);
-                },
-                home: _createPage1(),
-                page404: SamplePage(
-                  title: '404',
+                subRouteWidgetBuilders:
+                    AppRouters.subRouteWidgetBuilders[rootPath],
+                rootPath: rootPath,
+                home: _createPagePC3(),
+                page404: _createPage404(),
+              ),
+              settings: settings,
+            );
+          case AppRouters.ORDER_HISTORY:
+            return MaterialPageRoute(
+              builder: (context) => SubApp(
+                theme: ThemeData(
+                  primarySwatch: Colors.lightGreen,
                 ),
+                subRouteWidgetBuilders:
+                    AppRouters.subRouteWidgetBuilders[rootPath],
+                rootPath: rootPath,
+                home: _createPageORDER_HISTORY(),
+                page404: _createPage404(),
               ),
               settings: settings,
             );
           default:
-            return MaterialPageRoute(
-                builder: (context) => SamplePage(
-                      title: path1,
-                    ));
+            return MaterialPageRoute(builder: (context) => _createPage404());
         }
       },
-      home: _pageHome(),
+      home: _createHomeApp(),
     );
   }
 }
 
-Widget _pageHome() => SamplePage(
-      title: 'Home',
-      nextRouteNames: ['tien-ich', 'page2', 'page3'],
+class AppRouters {
+  static const PC3 = 'tien-ich';
+  static const ORDER_HISTORY = 'don-hang-tien-ich';
+
+  static final subRouteWidgetBuilders =
+      <String, Map<String, SubRouteWidgetBuilder>>{
+    PC3: <String, SubRouteWidgetBuilder>{
+      've-may-bay': (String originUri, String rootPath, String destPath,
+          RouteSettings settings, BuildContext context) {
+        if (destPath == null)
+          return _createPagePC3_VMB();
+        else if (destPath == 'chon-san-bay')
+          return _createPagePC3_VMB_CSB();
+        else
+          return null;
+      },
+      'hoa-don': (String originUri, String rootPath, String destPath,
+          RouteSettings settings, BuildContext context) {
+        if (destPath == null)
+          return _createPagePC3_HD();
+        else if (destPath == 'dien')
+          return _createPagePC3_HD_DIEN();
+        else
+          return null;
+      }
+    },
+    ORDER_HISTORY: <String, SubRouteWidgetBuilder>{
+      'chi-tiet': (String originUri, String rootPath, String destPath,
+          RouteSettings settings, BuildContext context) {
+        if (destPath == null)
+          return _createPageORDER_HISTORY_CHITIET();
+        else
+          return null;
+      },
+    },
+  };
+}
+
+Widget _createPage404() => SamplePage(
+      title: '404',
     );
 
-Widget _createPage1() => SamplePage(
+Widget _createHomeApp() => SamplePage(
+      title: 'Multiple Routers Sample',
+      nextRouteNames: ['tien-ich', 'don-hang-tien-ich', 'page3'],
+    );
+
+Widget _createPagePC3() => SamplePage(
       title: 'tien-ich',
       nextRouteNames: ['tien-ich/ve-may-bay', 'tien-ich/hoa-don'],
     );
 
-Widget _createPage11() => SamplePage(
+Widget _createPagePC3_VMB() => SamplePage(
       title: 'tien-ich/ve-may-bay',
       nextRouteNames: [
         'tien-ich/ve-may-bay/chon-san-bay',
         'tien-ich/ve-may-bay/page112',
       ],
     );
-Widget _createPage111() => SamplePage(
+Widget _createPagePC3_VMB_CSB() => SamplePage(
       title: 'tien-ich/ve-may-bay/chon-san-bay',
     );
-Widget _createPage12() => SamplePage(
+Widget _createPagePC3_HD() => SamplePage(
       title: 'tien-ich/hoa-don',
       nextRouteNames: ['tien-ich/hoa-don/dien'],
     );
-Widget _createPage121() => SamplePage(
+Widget _createPagePC3_HD_DIEN() => SamplePage(
       title: 'tien-ich/hoa-don/dien',
     );
 
-class SubRouteConstants {
-  static final subRouteWidgetBuilders = <String, SubRouteWidgetBuilder>{
-    've-may-bay': (Uri originUri, String rootPath, String destPath,
-        RouteSettings settings, BuildContext context) {
-      if (destPath == null)
-        return _createPage11();
-      else if (destPath == 'chon-san-bay')
-        return _createPage111();
-      else
-        return null;
-    },
-    'hoa-don': (Uri originUri, String rootPath, String destPath,
-        RouteSettings settings, BuildContext context) {
-      if (destPath == null)
-        return _createPage12();
-      else if (destPath == 'dien')
-        return _createPage121();
-      else
-        return null;
-    },
-  };
-}
+Widget _createPageORDER_HISTORY() => SamplePage(
+      title: AppRouters.ORDER_HISTORY,
+      nextRouteNames: ['${AppRouters.ORDER_HISTORY}/chi-tiet'],
+    );
+
+Widget _createPageORDER_HISTORY_CHITIET() => SamplePage(
+      title: '${AppRouters.ORDER_HISTORY}/chi-tiet',
+    );
